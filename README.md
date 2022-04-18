@@ -22,7 +22,7 @@ cat <<EOF>/etc/netplan/50-cloud-init.yaml
 network:
     version: 2
     ethernets:
-        enp3:
+        ens3:
             dhcp4: true
 EOF
 netplan apply
