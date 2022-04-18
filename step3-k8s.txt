@@ -1,0 +1,51 @@
+#cloud-config
+write_files:
+- content: |
+    #!/bin/bash
+    set -ex
+    systemctl restart kubelet
+    while true
+    do
+        sleep 5
+        if [ $(kubectl get pods --all-namespaces -o jsonpath='{range .items[*].status.containerStatuses[*]}{.ready}{"\n"}{end}' | grep -v true | wc -l) = 0 ]; then break; fi
+    done
+  path: /wait-for.sh
+  permissions: '0755'
+- content: |
+    #!/bin/bash
+    set -ex
+    apt-get update && apt-get install -y apt-transport-https ca-certificates curl
+    curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+    apt-get update && apt-get install -y kubelet=1.23.5-00 kubeadm=1.23.5-00 kubectl=1.23.5-00  
+    # init cluster
+    kubeadm init --pod-network-cidr=192.168.0.0/16 --kubernetes-version=1.23.5
+    mkdir -p /root/.kube
+    cp /etc/kubernetes/admin.conf /root/.kube/config
+    export KUBECONFIG=/etc/kubernetes/admin.conf
+    sleep 60
+    kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+    sleep 60
+    kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+    kubectl taint nodes --all node-role.kubernetes.io/master-
+    while true
+    do
+        sleep 1
+        if [ $(kubectl get pods -n kube-system | wc -l) = 8 ]; then break; fi
+    done
+    while true
+    do
+        sleep 1
+        if [ $(kubectl get pods --all-namespaces -o jsonpath='{range .items[*].status.containerStatuses[*]}{.ready}{"\n"}{end}' | grep -v true | wc -l) = 0 ]; then break; fi
+    done
+  path: /step3-k8s.sh
+  permissions: '0755'
+runcmd:
+  - /step3-k8s.sh
+cloud_init_modules:
+  - [ write-files, always ]
+cloud_config_modules:
+  - [ runcmd, always ]
+cloud_final_modules:
+  - [ scripts-user, always ]
+  - final-message

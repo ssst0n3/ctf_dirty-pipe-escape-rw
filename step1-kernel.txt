@@ -1,0 +1,19 @@
+#cloud-config
+write_files:
+- content: |
+    #!/bin/bash
+    set -ex
+    # update kernel
+    wget https://ctf-challenges.obs.cn-south-1.myhuaweicloud.com/2022/hwctf_month-Qualifier-202204/container/dirty-pipe-escape-rw/kernel/linux-image-5.15.30%2B_5.15.30%2B-1_amd64.deb
+    dpkg -i linux-image-5.15.30+_5.15.30+-1_amd64.deb
+  path: /step1-kernel.sh
+  permissions: '0755'
+runcmd:
+  - /step1-kernel.sh
+cloud_init_modules:
+  - [ write-files, always ]
+cloud_config_modules:
+  - [ runcmd, always ]
+cloud_final_modules:
+  - [ scripts-user, always ]
+  - final-message

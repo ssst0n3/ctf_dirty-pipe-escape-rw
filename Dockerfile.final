@@ -1,0 +1,2 @@
+FROM ssst0n3/docker_archive:release_basic_ubuntu-20.04 AS ctf_dirty-pipe-escape-rw
+COPY --from=ubuntu-22.04-20220414-step5-secret /ubuntu-server-cloudimg.img /

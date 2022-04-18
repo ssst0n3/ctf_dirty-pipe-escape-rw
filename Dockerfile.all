@@ -1,0 +1,76 @@
+FROM ssst0n3/docker_archive:build_basic_ubuntu-22.04-20220414 AS ubuntu-22.04-20220414-step0-init
+# cloud_init config
+COPY step0-init.txt cloud.txt
+RUN cloud-localds /cloud.img cloud.txt
+
+# COPY start_vm.sh /start_vm.sh
+COPY init_qemu.expect /init_qemu.expect
+RUN /init_qemu.expect 
+
+COPY shrunk.sh /
+RUN /shrunk.sh /ubuntu-server-cloudimg.img
+
+FROM ubuntu-22.04-20220414-step0-init AS ubuntu-22.04-20220414-step1-kernel
+# cloud_init config
+COPY step1-kernel.txt cloud.txt
+RUN cloud-localds /cloud.img cloud.txt
+
+# COPY start_vm.sh /start_vm.sh
+COPY init_qemu.expect /init_qemu.expect
+RUN /init_qemu.expect 
+
+COPY shrunk.sh /
+RUN /shrunk.sh /ubuntu-server-cloudimg.img
+
+# FROM ssst0n3/docker_archive:build_basic_ubuntu-22.04-20220414
+# COPY --from=0 /ubuntu-server-cloudimg.img /
+FROM ubuntu-22.04-20220414-step1-kernel AS ubuntu-22.04-20220414-step2-containerd
+# cloud_init config
+COPY step2-containerd.txt cloud.txt
+RUN cloud-localds /cloud.img cloud.txt
+
+# COPY start_vm.sh /start_vm.sh
+COPY init_qemu.expect /init_qemu.expect
+RUN /init_qemu.expect 
+
+COPY shrunk.sh /
+RUN /shrunk.sh /ubuntu-server-cloudimg.img
+
+FROM ubuntu-22.04-20220414-step2-containerd AS ubuntu-22.04-20220414-step3-k8s
+# cloud_init config
+COPY step3-k8s.txt cloud.txt
+RUN cloud-localds /cloud.img cloud.txt
+
+# COPY start_vm.sh /start_vm.sh
+COPY init_qemu.expect /init_qemu.expect
+RUN /init_qemu.expect 
+
+COPY shrunk.sh /
+RUN /shrunk.sh /ubuntu-server-cloudimg.img
+
+FROM ubuntu-22.04-20220414-step3-k8s AS ubuntu-22.04-20220414-step4-deployment
+# cloud_init config
+COPY step4-deployment.txt cloud.txt
+RUN cloud-localds /cloud.img cloud.txt
+
+# COPY start_vm.sh /start_vm.sh
+COPY init_qemu.expect /init_qemu.expect
+RUN /init_qemu.expect 
+
+COPY shrunk.sh /
+RUN /shrunk.sh /ubuntu-server-cloudimg.img
+
+FROM ubuntu-22.04-20220414-step4-deployment AS ubuntu-22.04-20220414-step5-secret
+# cloud_init config
+COPY step5-secret.txt cloud.txt
+RUN cloud-localds /cloud.img cloud.txt
+
+# COPY start_vm.sh /start_vm.sh
+COPY init_qemu.expect /init_qemu.expect
+RUN /init_qemu.expect 
+
+COPY shrunk.sh /
+RUN /shrunk.sh /ubuntu-server-cloudimg.img
+
+FROM ssst0n3/docker_archive:release_basic_ubuntu-20.04 AS ctf_dirty-pipe-escape-rw
+COPY --from=ubuntu-22.04-20220414-step5-secret /ubuntu-server-cloudimg.img /

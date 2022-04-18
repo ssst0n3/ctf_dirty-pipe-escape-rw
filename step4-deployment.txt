@@ -1,0 +1,18 @@
+#cloud-config
+write_files:
+- content: |
+    #!/bin/bash
+    set -ex
+    /wait-for.sh
+    kubectl apply -f https://raw.githubusercontent.com/ssst0n3/ctf_dirty-pipe-escape-rw/main/ssh/deployment.yaml
+  path: /step4-deployment.sh
+  permissions: '0755'
+runcmd:
+  - /step4-deployment.sh
+cloud_init_modules:
+  - [ write-files, always ]
+cloud_config_modules:
+  - [ runcmd, always ]
+cloud_final_modules:
+  - [ scripts-user, always ]
+  - final-message
