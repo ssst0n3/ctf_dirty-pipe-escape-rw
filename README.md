@@ -14,3 +14,11 @@ qemu-system-x86_64 \
 -nographic \
 -enable-kvm
 ```
+
+If you have met "network is unreachable" problem, this script can help
+
+```
+touch /etc/cloud/cloud-init.disabled
+cloud-init clean
+reboot
+```
